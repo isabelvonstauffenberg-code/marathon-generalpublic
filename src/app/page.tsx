@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { site } from "@/config/site";
 import { createGroup, isCode } from "@/lib/store";
+import { recentGroups, type RecentGroup } from "@/lib/group";
 import { Field, Honeypot, PrimaryButton, Wordmark, inputClass } from "@/components/ui";
 import { Hi, SpinBadge, Star } from "@/components/Stickers";
 
@@ -28,6 +30,8 @@ export default function Landing() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [linkError, setLinkError] = useState(false);
+  const [recent, setRecent] = useState<RecentGroup[]>([]);
+  useEffect(() => setRecent(recentGroups()), []);
 
   const start = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +66,25 @@ export default function Landing() {
         </h1>
         <p className="mt-6 max-w-[32ch] text-[14px] leading-[1.6] lowercase">{site.tagline}</p>
       </header>
+
+      {recent.length > 0 && (
+        <section className="mb-8 px-5">
+          <p className="display mb-3 text-[20px] leading-none lowercase">your groups</p>
+          <ul className="space-y-2">
+            {recent.map((g) => (
+              <li key={g.code}>
+                <Link href={`/g/${g.code}`} className="press flex items-center gap-3 rounded-[22px] border-[2.5px] border-ink bg-paper px-4 py-3">
+                  <Star size={28} fill="#22b5ff" strokeWidth={8} />
+                  <span className="display min-w-0 flex-1 truncate text-[18px] lowercase">{g.name}</span>
+                  <span className="display text-[18px]" aria-hidden>
+                    →
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="px-5">
         <form onSubmit={start} className="sticker relative rounded-[30px] bg-paper p-5">

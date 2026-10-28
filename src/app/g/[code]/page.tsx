@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { Camera, Plus } from "lucide-react";
-import { groupPath, useCode, useGroup } from "@/lib/group";
+import { groupPath, rememberGroup, useCode, useGroup } from "@/lib/group";
 import { useNow } from "@/lib/store";
 import { RunnerLive } from "@/components/RunnerLive";
 import { Feed } from "@/components/Feed";
@@ -10,11 +11,15 @@ import { ShareButton } from "@/components/ShareButton";
 import { NotFound, OfficialNote, validCode } from "@/components/GroupShell";
 import { LocalModeNote, PageHeader, SectionHead } from "@/components/ui";
 import { Star } from "@/components/Stickers";
+import { LinkReminder } from "@/components/LinkReminder";
 
 export default function GroupPage() {
   const code = useCode();
   const now = useNow();
   const g = useGroup(validCode(code) ? code : undefined);
+  useEffect(() => {
+    if (g.name && validCode(code)) rememberGroup(code, g.name);
+  }, [code, g.name]);
   if (!validCode(code)) return <NotFound reason="bad" />;
   if (g.missing) return <NotFound reason="missing" />;
 
@@ -22,6 +27,7 @@ export default function GroupPage() {
     <main>
       <PageHeader eyebrow="live" title={g.name || "\u00a0"} subtitle="every runner's star on the course. tap a card for their spots and photos." action={<ShareButton title={g.name} code={code} className="!px-3 !py-1.5 !text-[13px]" />} />
       <LocalModeNote />
+      <LinkReminder code={code} />
       <div className="mx-5 mb-6 grid grid-cols-2 gap-3">
         <Link href={groupPath(code, "/add")} className="press display flex items-center justify-center gap-2 rounded-full border-[2.5px] border-ink bg-ink py-3.5 text-[17px] text-sun lowercase hover:bg-pink hover:text-ink">
           <Plus size={18} strokeWidth={3} /> add a runner

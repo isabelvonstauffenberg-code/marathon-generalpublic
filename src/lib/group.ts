@@ -47,3 +47,19 @@ export function useGroup(code: string | undefined) {
     missing,
   };
 }
+
+const RECENT_KEY = "ftr-recent-groups";
+export type RecentGroup = { code: string; name: string; at: number };
+
+export function recentGroups(): RecentGroup[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function rememberGroup(code: string, name: string) {
+  const rest = recentGroups().filter((g) => g.code !== code);
+  localStorage.setItem(RECENT_KEY, JSON.stringify([{ code, name, at: Date.now() }, ...rest].slice(0, 8)));
+}
