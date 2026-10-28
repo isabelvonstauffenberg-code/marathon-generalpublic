@@ -104,6 +104,21 @@ export async function insert<T extends TableName>(table: T, row: NewRow<T>): Pro
   return full;
 }
 
+export type RunnerTimes = Pick<Runner, "gun_time" | "pace_fast" | "pace_goal" | "pace_slow">;
+
+export async function updateRunnerTimes(code: string, slug: string, patch: RunnerTimes) {
+  if (!isCode(code)) throw new Error("That group link looks wrong.");
+  const sb = supabase(code);
+  if (sb) {
+    const { error } = await sb.from("runners").update(patch).eq("group_code", code).eq("slug", slug);
+    if (error) throw error;
+  } else {
+    const rows = readLocal("runners", code).map((r) => (r.slug === slug ? { ...r, ...patch } : r));
+    localStorage.setItem(localKey(code, "runners"), JSON.stringify(rows));
+  }
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
 export async function createGroup(name: string): Promise<Group> {
   let lastError: unknown;
   for (let i = 0; i < 3; i++) {

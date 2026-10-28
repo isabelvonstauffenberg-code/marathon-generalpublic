@@ -10,6 +10,7 @@ import { useNow } from "@/lib/store";
 import { RunnerCard, RunnerLive } from "@/components/RunnerLive";
 import { SpotTimeline } from "@/components/SpotTimeline";
 import { Feed } from "@/components/Feed";
+import { EditTimes } from "@/components/EditTimes";
 import { NotFound, OfficialNote, validCode } from "@/components/GroupShell";
 import { LocalModeNote, PageHeader, SectionHead } from "@/components/ui";
 
@@ -28,6 +29,7 @@ export default function RunnerPage() {
         <PageHeader back={groupPath(code)} title="no runner here." subtitle="they may have been added on another device in preview mode." />
       </main>
     );
+  const row = g.runners.find((x) => x.slug === slug);
   const mine = sightingsFor(g.sightings, r.slug);
   const mats = mine.filter(isMat).sort((a, b) => a.seen_at.localeCompare(b.seen_at));
   const posts = g.posts.filter((s) => s.runner_slug === r.slug);
@@ -38,6 +40,7 @@ export default function RunnerPage() {
       <LocalModeNote />
       <div className="px-5">
         <RunnerCard r={r} sightings={mine} now={now} code={code} linked={false} />
+        {row && <EditTimes key={`${row.gun_time}-${row.pace_goal}-${row.pace_fast}`} runner={row} code={code} />}
       </div>
       <div className="mt-6">
         <RunnerLive runners={[r]} sightings={g.sightings} now={now} code={code} focusId={r.slug} cards={false} />

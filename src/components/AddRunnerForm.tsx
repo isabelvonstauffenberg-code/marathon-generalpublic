@@ -33,6 +33,26 @@ export function parseFinish(input: string): number | null {
   return total >= 2 * 3600 && total <= 9 * 3600 ? total : null;
 }
 
+// "4:30" → ±4% band around it; "3:50-4:00" or "3:50-4" → that range, goal in the middle. Seconds per mile.
+export function parseGoal(input: string): { fast: number; goal: number; slow: number } | null {
+  const parts = input.split(/\s*(?:-|–|—|to)\s*/).filter(Boolean);
+  const read = (p: string) => (/^\d$/.test(p.trim()) ? Number(p) * 3600 : parseFinish(p));
+  if (parts.length === 1) {
+    const t = read(parts[0]);
+    if (!t || t < 2 * 3600) return null;
+    const goal = t / MARATHON_MILES;
+    return { fast: Math.round(goal * 0.96), goal: Math.round(goal), slow: Math.round(goal * 1.04) };
+  }
+  if (parts.length !== 2) return null;
+  const [a, b] = parts.map(read);
+  if (!a || !b || a < 2 * 3600 || b > 9 * 3600) return null;
+  const [lo, hi] = a <= b ? [a, b] : [b, a];
+  return { fast: Math.round(lo / MARATHON_MILES), goal: Math.round((lo + hi) / 2 / MARATHON_MILES), slow: Math.round(hi / MARATHON_MILES) };
+}
+
+export const goalHint = (g: ReturnType<typeof parseGoal>) =>
+  g ? `about ${fmtPace(g.goal)}/mi${g.slow / g.fast > 1.09 || g.slow / g.fast < 1.07 ? `, ${fmtPace(g.fast)}–${fmtPace(g.slow)}/mi range` : ". stars run a ±4% band around it"}.` : "hours:minutes, e.g. 4:30, or a range like 3:50-4:00";
+
 const slugify = (name: string) =>
   name
     .toLowerCase()
@@ -66,7 +86,7 @@ export function AddRunnerForm({ code, existing }: { code: string; existing: Runn
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const finishSec = parseFinish(finish);
+  const goalPace = parseGoal(finish);
   const cleanBib = bib.trim();
 
   const findName = async () => {
@@ -90,8 +110,7 @@ export function AddRunnerForm({ code, existing }: { code: string; existing: Runn
     const finalName = (await findName()).trim();
     if (!finalName) return setError("Add a name so people know whose star it is.");
     if (!/^\d{2}:\d{2}$/.test(start)) return setError("Pick a start time.");
-    if (!finishSec) return setError("Goal finish should look like 4:30.");
-    const goal = finishSec / MARATHON_MILES;
+    if (!goalPace) return setError("Goal finish should look like 4:30 or 3:50-4:00.");
     setBusy(true);
     try {
       await insert("runners", {
@@ -101,9 +120,9 @@ export function AddRunnerForm({ code, existing }: { code: string; existing: Runn
         bib: cleanBib || null,
         gun_time: new Date(raceTime(start)).toISOString(),
         corral_delay_min: CORRAL_DELAY_MIN,
-        pace_fast: Math.round(goal * 0.96),
-        pace_goal: Math.round(goal),
-        pace_slow: Math.round(goal * 1.04),
+        pace_fast: goalPace.fast,
+        pace_goal: goalPace.goal,
+        pace_slow: goalPace.slow,
         color: colour,
       });
       router.push(groupPath(code) + window.location.search);
@@ -156,7 +175,7 @@ export function AddRunnerForm({ code, existing }: { code: string; existing: Runn
         </span>
       </div>
 
-      <Field label="goal finish time" hint={finishSec ? `about ${fmtPace(finishSec / MARATHON_MILES)}/mi. stars run a ±4% band around it.` : "hours:minutes, e.g. 4:30"}>
+      <Field label="goal finish time" hint={goalHint(goalPace)}>
         <input className={inputClass} value={finish} onChange={(e) => setFinish(e.target.value)} inputMode="numeric" placeholder="4:30" required />
       </Field>
 

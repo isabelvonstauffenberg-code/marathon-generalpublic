@@ -14,8 +14,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "Where the stars come from",
     body: (
       <p>
-        Each star is an estimate of where a runner is right now. When you add someone, you give their start time and goal finish time. The page assumes a 5-minute walk from the gun to the start
-        mat, then moves them along the course at an even pace. The shaded band runs from 4% faster to 4% slower than goal pace.
+        Each star is an estimate of where a runner is right now. When you add someone, you give their start time and goal finish time, either one time or a range like 3:50-4:00. Anyone in the group can change both later. The page assumes a 5-minute walk from the gun to the start
+        mat, then moves them along the course at an even pace. The shaded band runs from 4% faster to 4% slower than goal pace, or across the range if one was given.
       </p>
     ),
   },

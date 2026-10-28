@@ -25,7 +25,7 @@ const short = (d: Date) => fmtClock(d).replace(" a.m.", "am").replace(" p.m.", "
 
 export function statusLine(r: RunnerProfile, est: Estimate, sightings: Sighting[], now: Date) {
   const n = firstName(r.name);
-  if (est.status === "pre") return `hasn't started yet. starts around ${fmtClock(est.startsAt)}.`;
+  if (est.status === "pre") return `hasn't started yet. starts around ${fmtClock(est.startsAt).replace(/\.$/, "")}.`;
   if (est.status === "finished") return `finished, probably. go find ${n} near the finish and scream.`;
   if (est.anchor) {
     const s = sightings.find((x) => x.seen_at === est.anchor!.seenAt);

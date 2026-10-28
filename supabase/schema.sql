@@ -1,5 +1,5 @@
 -- find the runners: run this once in the Supabase SQL editor.
--- Everything is public read + insert only; nothing can be edited or deleted from the site.
+-- Everything is public read + insert only, except runner start/goal times; nothing can be deleted from the site.
 -- Reads are scoped to one group: the site sends the group code in an `x-group-code`
 -- header, so someone without the link can't list other groups' runners or photos.
 
@@ -69,6 +69,11 @@ create policy "add sighting" on sightings for insert
 
 grant select, insert on groups, runners, sightings to anon, authenticated;
 revoke update, delete on groups, runners, sightings from anon, authenticated;
+-- Anyone in a group can change a runner's start time and goal pace, nothing else.
+grant update (gun_time, pace_fast, pace_goal, pace_slow) on runners to anon, authenticated;
+drop policy if exists "edit runner times" on runners;
+create policy "edit runner times" on runners for update
+  using (group_code = request_group_code()) with check (group_code = request_group_code());
 
 -- Photos: public read by URL, JPEG uploads up to 2 MB, filed under the group code.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
